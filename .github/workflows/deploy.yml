@@ -22,11 +22,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
       - name: Create SSH directory
         run: mkdir -p ~/.ssh
+
       - name: Add EC2 host to known hosts
         run: |
           ssh-keyscan -H 51.20.8.248 >> ~/.ssh/known_hosts
+
       - name: Deploy API 
         env:
           EC2_USER: ubuntu
@@ -34,9 +37,25 @@ jobs:
           EC2_KEY: ${{ secrets.EC2_SECRET }}
         run: |
           echo "Deploying the API with the latest changes..."
-          echo "${{ secrets.EC2_SECRET}}" > ec2_key.pem
+          echo "${{ secrets.EC2_SECRET }}" > ec2_key.pem
           chmod 600 ec2_key.pem
-          ssh -i ec2_key.pem $EC2_USER@$EC2_HOST "cd /home/ubuntu/fastapi-book-project && git fetch origin main && git reset --hard origin/main"
+          
+          # Connect to EC2 and deploy
+          ssh -i ec2_key.pem $EC2_USER@$EC2_HOST << 'EOF'
+            cd /home/ubuntu/fastapi-book-project
+            git pull
+            
+            # (Optional) Activate virtual environment if using one
+            source venv/bin/activate
+            
+            # Install dependencies
+            pip install --no-cache-dir -r requirements.txt
+            
+            # Restart FastAPI (adjust this based on your setup)
+            sudo systemctl restart fastapi
+            
+            # Restart Nginx if necessary
+            sudo systemctl restart nginx
+          EOF
+          
           rm ec2_key.pem
-      
-       
