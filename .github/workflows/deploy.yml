@@ -36,7 +36,7 @@ jobs:
           echo "Deploying the API with the latest changes..."
           echo "${{ secrets.EC2_SECRET}}" > ec2_key.pem
           chmod 600 ec2_key.pem
-          ssh -i ec2_key.pem $EC2_USER@$EC2_HOST "cd /home/ubuntu/fastapi-book-project && git pull origin main"
+          ssh -i ec2_key.pem $EC2_USER@$EC2_HOST "cd /home/ubuntu/fastapi-book-project && git fetch origin main && git reset --hard origin/main"
           rm ec2_key.pem
       
        
